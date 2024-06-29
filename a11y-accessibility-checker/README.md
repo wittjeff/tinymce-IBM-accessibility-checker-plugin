@@ -1,3 +1,3 @@
-# a11YAccessibilityChecker TinyMCE Plugin
+# a11yAccessibilityChecker TinyMCE Plugin
 
 Welcome stranger! This is a repo containing the a11YAccessibilityChecker TinyMCE plugin.
