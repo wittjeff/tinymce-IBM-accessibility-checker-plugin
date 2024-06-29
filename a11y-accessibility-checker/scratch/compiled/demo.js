@@ -116,11 +116,91 @@ tinymce.init({
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-var setup = function (editor, url) {
+var setup = function (editor) {
     editor.ui.registry.addButton('a11y-accessibility-checker', {
-        text: 'a-11-y-accessibility-checker button',
+        text: 'Accessibility Checker',
         onAction: function () {
-            editor.setContent('<p>content added from a-11-y-accessibility-checker</p>');
+            var content = editor.getContent();
+            // Open the initial checking dialog
+            var dialog = editor.windowManager.open({
+                title: 'Accessibility Checker',
+                body: {
+                    type: 'panel',
+                    items: [
+                        {
+                            type: 'htmlpanel',
+                            html: '<p id="a11y-status">Checking...</p>'
+                        }
+                    ]
+                },
+                buttons: [],
+                onClose: function () { }
+            });
+            fetch('/check-accessibility', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ html: content })
+            })
+                .then(function (response) {
+                if (response.ok) {
+                    return response.blob();
+                }
+                else {
+                    return response.text().then(function (error) { throw new Error(error); });
+                }
+            })
+                .then(function (blob) {
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'report.xslx';
+                a.click();
+                URL.revokeObjectURL(url);
+                // Update the dialog content
+                dialog.redial({
+                    title: 'Accessibility Checker',
+                    body: {
+                        type: 'panel',
+                        items: [
+                            {
+                                type: 'htmlpanel',
+                                html: '<p id="a11y-status">Download ready</p>'
+                            }
+                        ]
+                    },
+                    buttons: [
+                        {
+                            type: 'cancel',
+                            text: 'Close',
+                            primary: true
+                        }
+                    ]
+                });
+            })
+                .catch(function (error) {
+                // Update the dialog content in case of error
+                dialog.redial({
+                    title: 'Accessibility Checker',
+                    body: {
+                        type: 'panel',
+                        items: [
+                            {
+                                type: 'htmlpanel',
+                                html: "<p id=\"a11y-status\">Error: ".concat(error.message, "</p>")
+                            }
+                        ]
+                    },
+                    buttons: [
+                        {
+                            type: 'cancel',
+                            text: 'Close',
+                            primary: true
+                        }
+                    ]
+                });
+            });
         }
     });
 };
